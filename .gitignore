@@ -1,0 +1,23 @@
+# Laravel
+src/.env
+src/vendor/
+src/node_modules/
+src/storage/*.key
+src/public/storage
+src/storage/app/public/*
+src/storage/framework/cache/*
+src/storage/framework/sessions/*
+src/storage/framework/views/*
+
+# Docker
+docker/mysql/data/
+docker/redis/data/
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
