@@ -4,19 +4,18 @@
     <div class="container">
         <div class="row justify-content-between align-items-center mb-4">
             <div class="col-md-6">
-                <h1>Tasks {{ $showDeleted ? '(Deleted)' : '' }}</h1>
+                <h1>Задачи {{ $showDeleted ? '(Deleted)' : '' }}</h1>
             </div>
             <div class="col-md-6 text-end">
                 @if($showDeleted)
-                    <a href="{{ route('tasks.index') }}" class="btn btn-secondary me-2">View Active Tasks</a>
+                    <a href="{{ route('tasks.index') }}" class="btn btn-secondary me-2">Просмотр активных задач</a>
                 @else
-                    <a href="{{ route('tasks.index', ['show_deleted' => true]) }}" class="btn btn-warning me-2">View Deleted Tasks</a>
-                    <a href="{{ route('tasks.create') }}" class="btn btn-primary">Create New Task</a>
+                    <a href="{{ route('tasks.index', ['show_deleted' => true]) }}" class="btn btn-warning me-2">Посмотреть удаленные задачи</a>
+                    <a href="{{ route('tasks.create') }}" class="btn btn-primary">Создать новую задачу</a>
                 @endif
             </div>
         </div>
 
-        <!-- Search and Filters -->
         <div class="card mb-4">
             <div class="card-body">
                 <form method="GET" action="{{ route('tasks.index') }}">
@@ -24,25 +23,25 @@
 
                     <div class="row">
                         <div class="col-md-3">
-                            <input type="text" name="search" class="form-control" placeholder="Search tasks..."
+                            <input type="text" name="search" class="form-control" placeholder="По названию."
                                    value="{{ request('search') }}">
                         </div>
                         <div class="col-md-2">
                             <select name="completed" class="form-select">
-                                <option value="">All Status</option>
-                                <option value="1" {{ request('completed') == '1' ? 'selected' : '' }}>Completed</option>
-                                <option value="0" {{ request('completed') == '0' ? 'selected' : '' }}>Pending</option>
+                                <option value="">По статусу</option>
+                                <option value="1" {{ request('completed') == '1' ? 'selected' : '' }}>Завершена</option>
+                                <option value="0" {{ request('completed') == '0' ? 'selected' : '' }}>Ожидает выполнения</option>
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <input type="text" name="tags" class="form-control" placeholder="Filter by tags..."
+                            <input type="text" name="tags" class="form-control" placeholder="по тегу..."
                                    value="{{ request('tags') }}">
                         </div>
                         <div class="col-md-2">
-                            <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+                            <button type="submit" class="btn btn-outline-primary w-100">Поиск</button>
                         </div>
                         <div class="col-md-3">
-                            <a href="{{ route('tasks.index', ['show_deleted' => $showDeleted]) }}" class="btn btn-outline-secondary w-100">Clear Filters</a>
+                            <a href="{{ route('tasks.index', ['show_deleted' => $showDeleted]) }}" class="btn btn-outline-secondary w-100">Очистить фильтры</a>
                         </div>
                     </div>
                 </form>
@@ -93,17 +92,17 @@
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" class="btn btn-sm {{ $task->completed ? 'btn-warning' : 'btn-success' }}">
-                                                {{ $task->completed ? 'Mark Pending' : 'Mark Complete' }}
+                                                {{ $task->completed ? 'Вернуть к выполнению' : 'Выполнить' }}
                                             </button>
                                         </form>
 
-                                        <a href="{{ route('tasks.edit', $task) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                        <a href="{{ route('tasks.edit', $task) }}" class="btn btn-sm btn-outline-primary">Редактировать</a>
 
                                         <form action="{{ route('tasks.destroy', $task) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                    onclick="return confirm('Are you sure?')">Delete</button>
+                                                    onclick="return confirm('Are you sure?')">Удалить</button>
                                         </form>
                                     @endif
                                 </div>
@@ -113,11 +112,9 @@
                 @endforeach
             </div>
 
-            <!-- Improved Pagination with page numbers -->
             <div class="mt-4">
                 <nav aria-label="Page navigation">
                     <ul class="pagination justify-content-center">
-                        <!-- Previous Page Link -->
                         @if ($tasks->onFirstPage())
                             <li class="page-item disabled">
                                 <span class="page-link">&laquo;</span>
@@ -128,7 +125,6 @@
                             </li>
                         @endif
 
-                        <!-- Page Numbers -->
                         @php
                             $current = $tasks->currentPage();
                             $last = $tasks->lastPage();
@@ -170,9 +166,9 @@
         @else
             <div class="alert alert-info">
                 @if($showDeleted)
-                    No deleted tasks found.
+                    Нет удаленных задач.
                 @else
-                    No tasks found.
+                   Нет задач.
                 @endif
             </div>
         @endif

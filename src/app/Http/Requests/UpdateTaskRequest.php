@@ -35,7 +35,6 @@ class UpdateTaskRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        // Преобразуем строку тегов в массив, если пришла строка
         if ($this->has('tags') && is_string($this->tags)) {
             $tags = array_filter(
                 array_map('trim', explode(',', $this->tags)),
@@ -47,7 +46,6 @@ class UpdateTaskRequest extends FormRequest
             ]);
         }
 
-        // Преобразуем completed в boolean
         if ($this->has('completed')) {
             $this->merge([
                 'completed' => (bool) $this->completed,

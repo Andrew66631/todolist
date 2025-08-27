@@ -2,43 +2,76 @@
 
 namespace App\Services;
 
+use App\Repositories\TaskRepositoryInterface;
 use App\Models\Task;
 use App\Jobs\ProcessTaskCompletion;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
 
 class TaskService
 {
+
+    /**
+     * @param TaskRepositoryInterface $taskRepository
+     */
+    public function __construct(
+        private readonly TaskRepositoryInterface $taskRepository
+    ) {}
+
+
+    /**
+     * @param string|null $search
+     * @param array $filters
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
     public function getPaginatedTasks(?string $search = null, array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
         $cacheKey = $this->getCacheKey($search, $filters, $perPage);
 
         return Cache::remember($cacheKey, 3600, function() use ($search, $filters, $perPage) {
-            $query = Task::latest();
-
-            if ($search) {
-                $query->search($search);
-            }
-
-            if (!empty($filters['tags'])) {
-                $query->withTags($filters['tags']);
-            }
-
-            if (isset($filters['completed'])) {
-                $query->where('completed', $filters['completed']);
-            }
-
-            return $query->paginate($perPage);
+            return $this->taskRepository->getPaginated($search, $filters, $perPage);
         });
     }
 
+
+    /**
+     * @param string|null $search
+     * @param array $filters
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function getDeletedPaginatedTasks(?string $search = null, array $filters = [], int $perPage = 10): LengthAwarePaginator
+    {
+        return $this->taskRepository->getDeletedPaginated($search, $filters, $perPage);
+    }
+
+
+    /**
+     * @param int $userId
+     * @param string|null $search
+     * @param array $filters
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function getByUserWithFilters(int $userId, ?string $search = null, array $filters = [], int $perPage = 10): LengthAwarePaginator
+    {
+        return $this->taskRepository->getByUserWithFilters($userId, $search, $filters, $perPage);
+    }
+
+
+    /**
+     * @param array $data
+     * @return Task
+     */
+
     public function createTask(array $data): Task
     {
-        $task = Task::create([
+        $task = $this->taskRepository->create([
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'tags' => $data['tags'] ?? [],
+            'user_id' => $data['user_id'] ?? auth()->id(),
         ]);
 
         $this->clearCache();
@@ -46,9 +79,15 @@ class TaskService
         return $task;
     }
 
+
+    /**
+     * @param Task $task
+     * @param array $data
+     * @return Task
+     */
     public function updateTask(Task $task, array $data): Task
     {
-        $task->update([
+        $this->taskRepository->update($task, [
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'tags' => $data['tags'] ?? [],
@@ -64,17 +103,28 @@ class TaskService
         return $task->fresh();
     }
 
+
+    /**
+     * @param Task $task
+     * @return void
+     */
+
     public function deleteTask(Task $task): void
     {
-        $task->delete();
+        $this->taskRepository->delete($task);
         $this->clearCache();
     }
 
+
+    /**
+     * @param Task $task
+     * @return Task
+     */
     public function toggleTaskCompletion(Task $task): Task
     {
         $completed = !$task->completed;
 
-        $task->update(['completed' => $completed]);
+        $this->taskRepository->update($task, ['completed' => $completed]);
         ProcessTaskCompletion::dispatch($task, $completed);
 
         $this->clearCache();
@@ -82,18 +132,48 @@ class TaskService
         return $task->fresh();
     }
 
+
+    /**
+     * @param Task $task
+     * @return void
+     */
+
     public function forceDeleteTask(Task $task): void
     {
-        $task->forceDelete();
+        $this->taskRepository->forceDelete($task);
         $this->clearCache();
     }
+
+
+    /**
+     * @param Task $task
+     * @return void
+     */
 
     public function restoreTask(Task $task): void
     {
-        $task->restore();
+        $this->taskRepository->restore($task);
         $this->clearCache();
     }
 
+
+    /**
+     * @param int $id
+     * @return Task|null
+     */
+
+    public function findTask(int $id): ?Task
+    {
+        return $this->taskRepository->getById($id);
+    }
+
+
+    /**
+     * @param string|null $search
+     * @param array $filters
+     * @param int $perPage
+     * @return string
+     */
     private function getCacheKey(?string $search, array $filters, int $perPage): string
     {
         return sprintf(
@@ -104,6 +184,10 @@ class TaskService
         );
     }
 
+
+    /**
+     * @return void
+     */
     private function clearCache(): void
     {
         $store = Cache::getStore();

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ config('app.name', 'TODO-list') }}</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -26,7 +26,7 @@
     <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="{{ url('/') }}">
-                {{ config('app.name', 'Laravel') }}
+                {{ config('app.name', 'TODO-list') }}
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
                 <span class="navbar-toggler-icon"></span>

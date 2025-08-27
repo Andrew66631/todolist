@@ -10,86 +10,79 @@ use App\Http\Requests\ToggleTaskRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
+use App\Handlers\TaskIndexHandler;
 
 class TaskController extends Controller
 {
+    /**
+     * @param TaskService $taskService
+     */
     public function __construct(
         private readonly TaskService $taskService
     ) {}
 
-    public function index(Request $request): View
+    /**
+     * @param Request $request
+     * @param TaskIndexHandler $handler
+     * @return View
+     */
+    public function index(Request $request, TaskIndexHandler $handler): View
     {
-        $search = $request->input('search');
-        $showDeleted = $request->boolean('show_deleted');
-        $filters = [
-            'tags' => $request->input('tags', ''),
-            'completed' => $request->input('completed'),
-            'show_deleted' => $showDeleted,
-        ];
+        $data = $handler->handle($request);
 
-        if ($showDeleted) {
-            $tasks = Task::onlyTrashed()
-                ->when($search, function($query, $search) {
-                    $query->where('title', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
-                })
-                ->when($filters['tags'], function($query, $tags) {
-                    $query->withTags($tags); // Используем исправленный scope
-                })
-                ->when(isset($filters['completed']), function($query) use ($filters) {
-                    $query->where('completed', $filters['completed']);
-                })
-                ->latest()
-                ->paginate(10);
-        } else {
-            $tasks = $this->taskService->getPaginatedTasks($search, $filters, 10);
-        }
-
-        $tasks->appends([
-            'search' => $search,
-            'tags' => $filters['tags'],
-            'completed' => $filters['completed'],
-            'show_deleted' => $showDeleted
-        ]);
-
-        return view('tasks.index', [
-            'tasks' => $tasks,
-            'search' => $search,
-            'filters' => $filters,
-            'showDeleted' => $showDeleted,
-        ]);
+        return view('tasks.index', $data);
     }
 
+    /**
+     * @return View
+     */
     public function create(): View
     {
         return view('tasks.create');
     }
 
+    /**
+     * @param StoreTaskRequest $request
+     * @return RedirectResponse
+     */
     public function store(StoreTaskRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-
         $this->taskService->createTask($validated);
 
         return redirect()->route('tasks.index')
             ->with('success', 'Вы создали новую задачу!');
     }
 
+
+    /**
+     * @param Task $task
+     * @return View
+     */
     public function edit(Task $task): View
     {
         return view('tasks.edit', compact('task'));
     }
 
+    /**
+     * @param UpdateTaskRequest $request
+     * @param Task $task
+     * @return RedirectResponse
+     */
     public function update(UpdateTaskRequest $request, Task $task): RedirectResponse
     {
         $validated = $request->validated();
-
         $this->taskService->updateTask($task, $validated);
 
         return redirect()->route('tasks.index')
             ->with('success', 'Задача успешно обновлена!');
     }
 
+
+    /**
+     * @param Task $task
+     * @return RedirectResponse
+     */
     public function destroy(Task $task): RedirectResponse
     {
         $this->taskService->deleteTask($task);
@@ -98,6 +91,11 @@ class TaskController extends Controller
             ->with('success', 'Задача удалена!');
     }
 
+
+    /**
+     * @param $id
+     * @return RedirectResponse
+     */
     public function restore($id): RedirectResponse
     {
         $task = Task::onlyTrashed()->findOrFail($id);
@@ -107,6 +105,11 @@ class TaskController extends Controller
             ->with('success', 'Задача восстановлена!');
     }
 
+
+    /**
+     * @param $id
+     * @return RedirectResponse
+     */
     public function forceDelete($id): RedirectResponse
     {
         $task = Task::onlyTrashed()->findOrFail($id);
@@ -115,6 +118,12 @@ class TaskController extends Controller
         return redirect()->route('tasks.index', ['show_deleted' => true])
             ->with('success', 'Задача удалена окончательно!');
     }
+
+    /**
+     * @param ToggleTaskRequest $request
+     * @param Task $task
+     * @return RedirectResponse
+     */
 
     public function toggle(ToggleTaskRequest $request, Task $task): RedirectResponse
     {

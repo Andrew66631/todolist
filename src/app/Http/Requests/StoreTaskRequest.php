@@ -8,7 +8,7 @@ class StoreTaskRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // Разрешаем всем, т.к. аутентификации нет
+        return true;
     }
 
     public function rules(): array
@@ -33,7 +33,6 @@ class StoreTaskRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        // Преобразуем строку тегов в массив, если пришла строка
         if ($this->has('tags') && is_string($this->tags)) {
             $tags = array_filter(
                 array_map('trim', explode(',', $this->tags)),
