@@ -25,7 +25,7 @@ class Task extends Model
         'tags' => 'array',
         'completed' => 'boolean',
         'completed_at' => 'datetime',
-        'deleted_at' => 'datetime',Edit
+        'deleted_at' => 'datetime',
     ];
 
     protected function tags(): Attribute
